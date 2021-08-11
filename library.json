@@ -19,15 +19,15 @@
   "dependencies": [
     {
       "name": "ESPAsyncTCP-esphome",
-      "platforms": "espressif8266"
+      "platforms": ["espressif8266"]
     },
     {
       "name": "AsyncTCP-esphome",
-      "platforms": "espressif32"
+      "platforms": ["espressif32"]
     },
     {
       "name": "Hash",
-      "platforms": "espressif8266"
+      "platforms": ["espressif8266"]
     }
   ]
 }
