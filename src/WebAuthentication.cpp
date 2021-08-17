@@ -19,6 +19,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "WebAuthentication.h"
+#include "ESPAsyncWebServerPrivate.h"
 #include <libb64/cencode.h>
 #ifdef ESP32
 #include "mbedtls/md5.h"
@@ -128,16 +129,16 @@ String generateDigestHash(const char * username, const char * password, const ch
 }
 
 String requestDigestAuthentication(const char * realm){
-  String header = "realm=\"";
+  String header = STR("realm=\"");
   if(realm == NULL)
-    header.concat("asyncesp");
+    header.concat(STR("asyncesp"));
   else
     header.concat(realm);
-  header.concat( "\", qop=\"auth\", nonce=\"");
+  header.concat(STR("\", qop=\"auth\", nonce=\""));
   header.concat(genRandomMD5());
-  header.concat("\", opaque=\"");
+  header.concat(STR("\", opaque=\""));
   header.concat(genRandomMD5());
-  header.concat("\"");
+  header.concat(STR("\""));
   return header;
 }
 

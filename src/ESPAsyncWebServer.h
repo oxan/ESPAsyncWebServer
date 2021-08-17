@@ -216,7 +216,7 @@ class AsyncWebServerRequest {
     size_t contentLength() const { return _contentLength; }
     bool multipart() const { return _isMultipart; }
     const char * methodToString() const;
-    const char * requestedConnTypeToString() const;
+    String requestedConnTypeToString() const;
     RequestedConnectionType requestedConnType() const { return _reqconntype; }
     bool isExpectedRequestedConnType(RequestedConnectionType erct1, RequestedConnectionType erct2 = RCT_NOT_USED, RequestedConnectionType erct3 = RCT_NOT_USED);
     void onDisconnect (ArDisconnectHandler fn);
@@ -368,7 +368,7 @@ class AsyncWebServerResponse {
     size_t _ackedLength;
     size_t _writtenLength;
     WebResponseState _state;
-    const char* _responseCodeToString(int code);
+    String _responseCodeToString(int code);
 
   public:
     AsyncWebServerResponse();

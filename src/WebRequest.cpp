@@ -19,12 +19,9 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "ESPAsyncWebServer.h"
+#include "ESPAsyncWebServerPrivate.h"
 #include "WebResponseImpl.h"
 #include "WebAuthentication.h"
-
-#ifndef ESP8266
-#define os_strlen strlen
-#endif
 
 static const String SharedEmptyString = String();
 
@@ -143,9 +140,9 @@ void AsyncWebServerRequest::_onData(void *buf, size_t len){
           _parsedLength += len;
     } else {
       if(_parsedLength == 0){
-        if(_contentType.startsWith("application/x-www-form-urlencoded")){
+        if(_contentType.startsWith(STR("application/x-www-form-urlencoded"))){
           _isPlainPost = true;
-        } else if(_contentType == "text/plain" && __is_param_char(((char*)buf)[0])){
+        } else if(_contentType == STR("text/plain") && __is_param_char(((char*)buf)[0])){
           size_t i = 0;
           while (i<len && __is_param_char(((char*)buf)[i++]));
           if(i < len && ((char*)buf)[i-1] == '='){
@@ -314,32 +311,32 @@ bool AsyncWebServerRequest::_parseReqHeader(){
   if(index){
     String name = _temp.substring(0, index);
     String value = _temp.substring(index + 2);
-    if(name.equalsIgnoreCase("Host")){
+    if(name.equalsIgnoreCase(STR("Host"))){
       _host = value;
-    } else if(name.equalsIgnoreCase("Content-Type")){
+    } else if(name.equalsIgnoreCase(STR("Content-Type"))){
 	  _contentType = value.substring(0, value.indexOf(';'));
-      if (value.startsWith("multipart/")){
+      if (value.startsWith(STR("multipart/"))){
         _boundary = value.substring(value.indexOf('=')+1);
         _boundary.replace("\"","");
         _isMultipart = true;
       }
-    } else if(name.equalsIgnoreCase("Content-Length")){
+    } else if(name.equalsIgnoreCase(STR("Content-Length"))){
       _contentLength = atoi(value.c_str());
-    } else if(name.equalsIgnoreCase("Expect") && value == "100-continue"){
+    } else if(name.equalsIgnoreCase(STR("Expect")) && value == STR("100-continue")){
       _expectingContinue = true;
-    } else if(name.equalsIgnoreCase("Authorization")){
-      if(value.length() > 5 && value.substring(0,5).equalsIgnoreCase("Basic")){
+    } else if(name.equalsIgnoreCase(STR("Authorization"))){
+      if(value.length() > 5 && value.substring(0,5).equalsIgnoreCase(STR("Basic"))){
         _authorization = value.substring(6);
-      } else if(value.length() > 6 && value.substring(0,6).equalsIgnoreCase("Digest")){
+      } else if(value.length() > 6 && value.substring(0,6).equalsIgnoreCase(STR("Digest"))){
         _isDigest = true;
         _authorization = value.substring(7);
       }
     } else {
-      if(name.equalsIgnoreCase("Upgrade") && value.equalsIgnoreCase("websocket")){
+      if(name.equalsIgnoreCase(STR("Upgrade")) && value.equalsIgnoreCase(STR("websocket"))){
         // WebSocket request can be uniquely identified by header: [Upgrade: websocket]
         _reqconntype = RCT_WS;
       } else {
-        if(name.equalsIgnoreCase("Accept") && strContains(value, "text/event-stream", false)){
+        if(name.equalsIgnoreCase(STR("Accept")) && strContains(value, STR("text/event-stream"), false)){
           // WebEvent request can be uniquely identified by header:  [Accept: text/event-stream]
           _reqconntype = RCT_EVENT;
         }
@@ -431,10 +428,10 @@ void AsyncWebServerRequest::_parseMultipartPostByte(uint8_t data, bool last){
        _temp += (char)data;
     if((char)data == '\n'){
       if(_temp.length()){
-        if(_temp.length() > 12 && _temp.substring(0, 12).equalsIgnoreCase("Content-Type")){
+        if(_temp.length() > 12 && _temp.substring(0, 12).equalsIgnoreCase(STR("Content-Type"))){
           _itemType = _temp.substring(14);
           _itemIsFile = true;
-        } else if(_temp.length() > 19 && _temp.substring(0, 19).equalsIgnoreCase("Content-Disposition")){
+        } else if(_temp.length() > 19 && _temp.substring(0, 19).equalsIgnoreCase(STR("Content-Disposition"))){
           _temp = _temp.substring(_temp.indexOf(';') + 2);
           while(_temp.indexOf(';') > 0){
             String name = _temp.substring(0, _temp.indexOf('='));
@@ -570,8 +567,8 @@ void AsyncWebServerRequest::_parseLine(){
       _server->_attachHandler(this);
       _removeNotInterestingHeaders();
       if(_expectingContinue){
-        const char * response = "HTTP/1.1 100 Continue\r\n\r\n";
-        _client->write(response, os_strlen(response));
+        String response = STR("HTTP/1.1 100 Continue\r\n\r\n");
+        _client->write(response.c_str(), response.length());
       }
       //check handler for authentication
       if(_contentLength){
@@ -806,7 +803,7 @@ void AsyncWebServerRequest::send_P(int code, const String& contentType, PGM_P co
 
 void AsyncWebServerRequest::redirect(const String& url){
   AsyncWebServerResponse * response = beginResponse(302);
-  response->addHeader("Location",url);
+  response->addHeader(STR("Location"),url);
   send(response);
 }
 
@@ -847,16 +844,16 @@ bool AsyncWebServerRequest::authenticate(const char * hash){
 void AsyncWebServerRequest::requestAuthentication(const char * realm, bool isDigest){
   AsyncWebServerResponse * r = beginResponse(401);
   if(!isDigest && realm == NULL){
-    r->addHeader("WWW-Authenticate", "Basic realm=\"Login Required\"");
+    r->addHeader(STR("WWW-Authenticate"), STR("Basic realm=\"Login Required\""));
   } else if(!isDigest){
-    String header = "Basic realm=\"";
+    String header = STR("Basic realm=\"");
     header.concat(realm);
     header.concat("\"");
-    r->addHeader("WWW-Authenticate", header);
+    r->addHeader(STR("WWW-Authenticate"), header);
   } else {
-    String header = "Digest ";
+    String header = STR("Digest ");
     header.concat(requestDigestAuthentication(realm));
-    r->addHeader("WWW-Authenticate", header);
+    r->addHeader(STR("WWW-Authenticate"), header);
   }
   send(r);
 }
@@ -988,14 +985,14 @@ const char * AsyncWebServerRequest::methodToString() const {
   return "UNKNOWN";
 }
 
-const char *AsyncWebServerRequest::requestedConnTypeToString() const {
+String AsyncWebServerRequest::requestedConnTypeToString() const {
   switch (_reqconntype) {
-    case RCT_NOT_USED: return "RCT_NOT_USED";
-    case RCT_DEFAULT:  return "RCT_DEFAULT";
-    case RCT_HTTP:     return "RCT_HTTP";
-    case RCT_WS:       return "RCT_WS";
-    case RCT_EVENT:    return "RCT_EVENT";
-    default:           return "ERROR";
+    case RCT_NOT_USED: return STR("RCT_NOT_USED");
+    case RCT_DEFAULT:  return STR("RCT_DEFAULT");
+    case RCT_HTTP:     return STR("RCT_HTTP");
+    case RCT_WS:       return STR("RCT_WS");
+    case RCT_EVENT:    return STR("RCT_EVENT");
+    default:           return STR("ERROR");
   }
 }
 
